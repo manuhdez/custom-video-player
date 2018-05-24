@@ -1,52 +1,56 @@
-const videoFile = document.querySelector('.player__video');
+const video = document.querySelector('.viewer');
+const sliders = document.querySelectorAll('.player__slider');
+const toggle = document.querySelector('.player__button');
+const skipButtons = document.querySelectorAll('[data-skip]');
+const progress = document.querySelector('.progress');
+const progressBar = document.querySelector('.progress__filled');
 
-const slider = document.querySelectorAll('.player__slider');
-const volumeSlider = slider[0];
-const speedSlider = slider[1];
-
-const playerButtons = document.querySelectorAll('.player__button');
-const playPause = playerButtons[0];
-const timerBack = playerButtons[1];
-const timerForw = playerButtons[2];
-
-
-function toggleVideo() {
-  const videoClasses = [...videoFile.classList];
-  if (!videoClasses.includes('playing')) {
-    videoFile.play();
-    videoFile.classList.add('playing');
-  } else {
-    videoFile.pause();
-    videoFile.classList.remove('playing');
-  }
-  // console.log(videoFile.currentTime);
+function togglePlay() {
+  const method = video.paused ? 'play' : 'pause';
+  video[method]();
+  updateToggleButton();
 }
 
-function changeVolume(e) {
-  newVolume = e.target.value;
-  videoFile.volume = newVolume;
-  // console.log(videoFile.volume);
+function updateToggleButton() {
+  const icon = video.paused ? '►' : '❚ ❚';
+  toggle.textContent = icon;
 }
 
-// function timerButtonsChange(e) {
-//   const timeChange = e.target.dataset.skip;
-//   const actualTime = videoFile.currentTime;
+function changeSliderHandle() {
+  property = this.name;
+  newVal = this.value;
 
-//   let newTime = actualTime + timeChange;
-//   // if (actualTime < 5 && timeChange == -5) {
-//   //   newTime = 0;
-//   // }
+  video[property] = newVal;
+}
 
-//   videoFile.currentTime = newTime;
-//   console.log(timeChange);
-// }
+function skip() {
+  const skipTime = parseFloat(this.dataset.skip);
+  video.currentTime += skipTime;
+}
 
-videoFile.addEventListener('click', toggleVideo);
-playPause.addEventListener('click', toggleVideo);
+function handleProgress() {
+  const percent = (video.currentTime / video.duration) * 100;
+  progressBar.style.flexBasis = `${percent}%`;
+}
 
-volumeSlider.addEventListener('change', changeVolume);
-volumeSlider.addEventListener('mouseover', changeVolume);
+function scrub(e) {
+  const touched = e.offsetX;
+  const newTime = (touched / this.offsetWidth) * video.duration;
+  video.currentTime = newTime;
+}
 
-// timerBack.addEventListener('click', timerButtonsChange);
-// timerForw.addEventListener('click', timerButtonsChange);
-// console.dir(videoFile);
+video.addEventListener('click', togglePlay);
+video.addEventListener('timeupdate', handleProgress);
+
+toggle.addEventListener('click', togglePlay);
+
+sliders.forEach(slider => slider.addEventListener('change', changeSliderHandle));
+sliders.forEach(slider => slider.addEventListener('mousemove', changeSliderHandle));
+
+skipButtons.forEach(button => button.addEventListener('click', skip));
+
+let mousedown = false;
+progress.addEventListener('click', scrub);
+progress.addEventListener('mousemove', (e) => mousedown && scrub(e));
+progress.addEventListener('mousedown', () => mousedown = true);
+progress.addEventListener('mouseup', () => mousedown = false);
